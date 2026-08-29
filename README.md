@@ -1,15 +1,37 @@
-# SFND 2D Feature Tracking
+# 2D Feature Tracking
+
+Benchmarking detector–descriptor combinations for camera-based collision detection, comparing keypoint yield, match rate and runtime across HARRIS, FAST, BRISK, ORB, AKAZE and SIFT.
+
+Images are held in a fixed-size ring buffer so memory stays bounded regardless of sequence length.
 
 <img src="images/keypoints.png" width="820" height="248" />
 
-The idea of the camera course is to build a collision detection system - that's the overall goal for the Final Project. As a preparation for this, you will now build the feature tracking part and test various detector / descriptor combinations to see which ones perform best. This mid-term project consists of four parts:
 
-* First, you will focus on loading images, setting up data structures and putting everything into a ring buffer to optimize memory load. 
-* Then, you will integrate several keypoint detectors such as HARRIS, FAST, BRISK and SIFT and compare them with regard to number of keypoints and speed. 
-* In the next part, you will then focus on descriptor extraction and matching using brute force and also the FLANN approach we discussed in the previous lesson. 
-* In the last part, once the code framework is complete, you will test the various algorithms in different combinations and compare them with regard to some performance measures. 
+## Results
 
-See the classroom instruction and code comments for more details on each of these parts. Once you are finished with this project, the keypoint matching part will be set up and you can proceed to the next lesson, where the focus is on integrating Lidar points and on object detection using deep-learning. 
+Full benchmark across all detector–descriptor combinations is in [`results/`](results/). The three fastest combinations are all FAST-based. Runtime across the full set spans two orders of magnitude, and the highest-yield detectors are consistently the slowest:
+
+| Detector | Descriptor | Matched Keypoints | Detection Time (ms) | Description Time (ms) |
+|----------|-----------|--------------------|---------------------|-----------------------|
+| FAST     | BRIEF     |         107        |        0.810        |        0.429          |
+| FAST     | BRISK     |         80         |        0.850        |        1.673          |
+| FAST     | ORB       |         96         |        0.917        |        1.419          |
+
+
+## Conclusion
+FAST is the detector choice: detection stays under 1 ms with matched keypoints consistently above 60. Other detectors ranged from 1.8 ms to 200 ms, with keypoint counts from 9 to 203 — and the high-yield detectors correlate strongly with high runtime, SIFT being the clearest example.
+
+BRIEF is the descriptor choice, at minimum 3 ms faster than the alternatives. Across the ten fastest combinations, BRIEF appears five times, BRISK four and ORB once, with only 0.19 ms separating the ten.
+
+FAST/BRIEF gave 0.81 ms detection and 0.43 ms description with 107 matched keypoints. It wasn't the outright fastest combination, but it returned 20 more keypoints than the next closest at comparable timing. Since the goal is tracking the preceding vehicle for TTC estimation, keypoint count directly bounds the accuracy of that calculation — so the right choice is the combination that maximises matches while staying inside a real-time budget, not the one that minimises time alone.
+
+
+## Basic Build Instructions
+
+1. Clone this repo.
+2. Make a build directory in the top level directory: `mkdir build && cd build`
+3. Compile: `cmake .. && make`
+4. Run it: `./2D_feature_tracking`.
 
 ## Dependencies for Running Locally
 1. cmake >= 2.8
@@ -34,10 +56,5 @@ c:\vcpkg> vcpkg install opencv4[nonfree,contrib]:x64-windows
 ```
 Then, add *C:\vcpkg\installed\x64-windows\bin* and *C:\vcpkg\installed\x64-windows\debug\bin* to your user's _PATH_ variable. Also, set the _CMake Toolchain File_ to *c:\vcpkg\scripts\buildsystems\vcpkg.cmake*.
 
-
-## Basic Build Instructions
-
-1. Clone this repo.
-2. Make a build directory in the top level directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./2D_feature_tracking`.
+---
+Built on the starter framework from Udacity's Sensor Fusion Nanodegree.
